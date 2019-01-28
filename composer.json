@@ -1,0 +1,14 @@
+{
+	"name" : "PHPExcelDB",
+	"description" : "PHPSpreadSheet",
+	"type" : "prject",
+	"license" : "PHP License",
+	"minimum-stability" : "beta",
+	"keywords" : [
+		"DB Excel SpreadSheet"
+	],
+	"require" : {
+		"phpoffice/phpspreadsheet" : "1.0.0",
+		"vlucas/phpdotenv": "^3.1"
+	}
+}

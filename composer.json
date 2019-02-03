@@ -1,5 +1,5 @@
 {
-	"name" : "PHPExcelDB",
+	"name" : "siokobu/phpexceldb",
 	"description" : "Simple Library for test using excel and db",
 	"type" : "prject",
 	"license" : "Apache-2.0",

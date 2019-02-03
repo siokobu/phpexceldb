@@ -5,7 +5,6 @@ namespace PHPExcelDB;
 use Exception;
 use PDO;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
-use Dotenv\Dotenv;
 use Monolog\Logger;
 use Monolog\Handler\StreamHandler;
 use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
@@ -36,7 +35,7 @@ class PHPExcelDB {
 	public static function createPDO($connInfo = null)
 	{
 		// $constr が設定されていない場合は、.envから接続文字列を取得
-		if ($connInfo == null) {
+/* 		if ($connInfo == null) {
 			$dotenv = Dotenv::create(__DIR__.'/..');
 			$dotenv->load();
 			
@@ -48,11 +47,11 @@ class PHPExcelDB {
 			
 			$username = getenv("DB_USERNAME");
 			$password = getenv("DB_PASSWORD");
-		} else {
+		} else { */
 			$constr = "pgsql:host=".$connInfo["host"].";port=".$connInfo["port"].";dbname=".$connInfo["dbname"].";";
 			$username = $connInfo["username"];
 			$password = $connInfo["password"];
-		}
+//		}
 		
 		// DB接続用のPDOオブジェクトを初期化
 		$pdo = new PDO($constr, $username, $password);

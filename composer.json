@@ -1,14 +1,28 @@
 {
 	"name" : "PHPExcelDB",
-	"description" : "PHPSpreadSheet",
+	"description" : "Simple Library for test using excel and db",
 	"type" : "prject",
-	"license" : "PHP License",
-	"minimum-stability" : "beta",
+	"license" : "Apache-2.0",
+	"minimum-stability" : "stable",
 	"keywords" : [
 		"DB Excel SpreadSheet"
 	],
 	"require" : {
 		"phpoffice/phpspreadsheet" : "1.0.0",
-		"vlucas/phpdotenv": "^3.1"
+		"vlucas/phpdotenv" : "^3.1"
+	},
+	"require-dev" : {
+		"phpunit/phpunit" : "7.0.*",
+		"monolog/monolog" : "~1.24"
+	},
+	"autoload" : {
+		"psr-4" : {
+			"PHPExcelDB\\" : "src/"
+		}
+	},
+	"autoload-dev" : {
+		"psr-4" : {
+			"PHPExcelDBTest\\" : "tests/"
+		}
 	}
 }

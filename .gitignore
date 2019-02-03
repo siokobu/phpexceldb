@@ -3,3 +3,5 @@
 /.buildpath
 /.project
 /.settings/
+/tests/input/
+/tests/output/

@@ -10,6 +10,7 @@ use Monolog\Handler\StreamHandler;
 use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 use PhpOffice\PhpSpreadsheet\Style\Color;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 
 
 /**
@@ -29,7 +30,7 @@ class PHPExcelDB {
 	
 
 	/**
-	 * PDO作成用のサポートクラス．引数を指定していない場合、.envファイルから取得する．DB_HOST,DB_PORT,DB_DATABASE,DB_USERNAME,DB_PASSWORDを設定．
+	 * PDO作成用のサポートメソッド．
 	 * @param Array $connInfo DB接続情報を指定する．host,port,dbname,username,passwordを設定する．
 	 */
 	public static function createPDO($connInfo = null)
@@ -184,23 +185,30 @@ class PHPExcelDB {
 	public function exportDBtoExcel($outputFile, $targetTables)
 	{
 		try{
+			// SpreadSheetオブジェクトを初期化し、デフォルトのシートを削除
 			$excel = new Spreadsheet();
 			$excel->removeSheetByIndex(0);
 			
+			// 設定されたテーブルごとに出力処理を行う
 			for ($i = 0; $i < count($targetTables); $i++ ) {
+				
+				// 処理対象のシートを作成
 				$sheet = $excel->createSheet($i);
+				
+				// 作成したシートにタイトルを設定
 				$sheet->setTitle($targetTables[$i]);
 				
+				// カラム一覧を取得するために、SELECT文を投入する
 				$stmt = $this->pdo->query("SELECT * FROM $targetTables[$i]");
 				for($j = 0; $j < $stmt->columnCount(); $j++) {
 					$meta = $stmt->getColumnMeta($j);
-					print $meta['name']."\n";
-					$sheet->setCellValueByColumnAndRow($j+1, 1, $meta['name']);
+					$sheet->setCellValueByColumnAndRow($j+1, 1, $meta['name'], );
 				}
 				
 				$j = 2;
 				while($result = $stmt->fetch(PDO::FETCH_NUM)) {
 					for($k = 0; $k < count($result); $k++) {
+						$sheet->getCellByColumnAndRow($k+1, $j)->getStyle()->getNumberFormat()->setFormatCode(NumberFormat::FORMAT_TEXT);
 						$sheet->setCellValueByColumnAndRow($k+1, $j, $result[$k]);
 					}
 					$j++;

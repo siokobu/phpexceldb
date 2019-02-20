@@ -42,6 +42,48 @@ class PHPExcelDBTest extends TestCase {
 	public function testGetExcelDiff_01() {
 		$phpExcelDB = new PHPExcelDB($this->pdo);
 		$phpExcelDB->getExcelDiff(self::INPUTDIR."testGetExcelDiff_01_01.xlsx", self::INPUTDIR."testGetExcelDiff_01_02.xlsx", self::DIFFDIR."testGetExcelDiff_01.xlsx");
+				
+	}
+	
+	/**
+	 * @test
+	 */
+	public function testExportData() {
+		$connInfo = [
+				'host' => '127.0.0.1',
+				'port' => 54321,
+				'dbname' => 'home_money',
+				'username' => 'tomocky1',
+				'password' => 'tjge1417'
+		];
+		
+		$target = [
+				'accounts',
+				'accounts_id_seq',
+// 				'balances',
+// 				'balances_id_seq',
+// 				'balances_wallet_id_seq',
+// 				'date_numbering',
+// 				'date_numbering_id_seq',
+// 				'incomes',
+// 				'incomes_id_seq',
+// 				'moves',
+// 				'moves_id_seq',
+// 				'outgoings',
+// 				'outgoings_id_seq',
+// 				'payments',
+// 				'payments_id_seq',
+// 				'receipts',
+// 				'receipts_id_seq',
+// 				'trans',
+// 				'trans_id_seq',
+				'user'
+		];
+		
+		$phpExcelDB = new PHPExcelDB(PHPExcelDB::createPDO($connInfo));
+		$phpExcelDB->exportDBtoExcel(__DIR__."/output/alldata.xlsx", $target);
+		
 		
 	}
+	
 }

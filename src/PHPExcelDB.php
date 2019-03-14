@@ -93,25 +93,40 @@ class PHPExcelDB {
 	/**
 	 *  Excelファイルの内容をDBへ登録する。
 	 *  @param String $inputFile 登録用データファイル
+	 *  @param Boolean 処理対象のテーブルのデータを削除するかどうか。Trueならば削除する
 	 */
-	public function importDBFromExcel($inputFile)
+	public function importDBFromExcel($inputFile, $isDeleteTable)
 	{
 		try {
 			// 対象のExcelファイルを開く
 			$excel = (new \PhpOffice\PhpSpreadsheet\Reader\Xlsx())->load($inputFile);
 			
+			// 処理対象のテーブル名を全て取得する
+			$tables = array();
+			for ($i = 0; $i < $excel->getSheetCount(); $i++) {
+				array_push($tables, $excel->getSheet($i)->getTitle());
+			}
 			
+			// トランザクションを開始し、処理を開始する
 			$this->pdo->beginTransaction();
-	     
 			
-			for ($i = 0; $i < $excel->getSheetCount(); $i++)
-			{
-				$sheet = $excel->getSheet($i);
-				$tableName = $sheet->getTitle();
+			// 処理対象のテーブルを全て削除する
+			if($isDeleteTable) {
+				
+				// 処理対象のテーブルのデータを削除する
+				foreach ($tables as $table) {
+					
+					// 指定したテーブルのデータをすべて削除する
+					$this->deleteTableData($table);
+				}
+				
+			}
+	     
+			// テーブルの数だけ繰り返し処理を実行する
+			foreach ($tables as $tableName) {
 
-//				$sql = "DELETE FROM ".$tableName.";";
-//				$this->logger->debug($sql);
-//				$this->pdo->exec($sql);
+				// 処理対象のシートを取得
+				$sheet = $excel->getSheetByName($tableName);
 
 				// Excelシートの内容を配列に格納
 				$data = $sheet->toArray();
@@ -132,6 +147,8 @@ class PHPExcelDB {
 					
 					// 一行目はカラム名のため、INSERT分を作成せずカラム列の文字列を作成
 					if ($j == 0) {
+						$sql = $sql . "INSERT INTO ".$tableName." (";
+						
 						for ($k = 0; $k < count($data[$j]); $k++) {
 							if(strlen($data[$j][$k])==0) continue;
 							$sqlColumns = $sqlColumns.$data[$j][$k].", ";
@@ -176,6 +193,17 @@ class PHPExcelDB {
 	     	throw $ex;
 	     }
 	}
+	
+	/**
+	 * 指定したテーブルの情報をすべて削除する。
+	 * @param String $tableName テーブル名
+	 */
+	private function deleteTableData($tableName) {
+		$sql = "DELETE FROM ".$tableName.";";
+		$this->logger->debug($tableName."テーブルを削除します：".$sql);
+		$this->pdo->exec($sql);
+	}
+	
 
 	/**
 	 * DBの内容をExcelへExportする
@@ -200,9 +228,16 @@ class PHPExcelDB {
 				
 				// カラム一覧を取得するために、SELECT文を投入する
 				$stmt = $this->pdo->query("SELECT * FROM $targetTables[$i]");
+				
+				// メタデータを取得
+				$meta = array();
 				for($j = 0; $j < $stmt->columnCount(); $j++) {
-					$meta = $stmt->getColumnMeta($j);
-					$sheet->setCellValueByColumnAndRow($j+1, 1, $meta['name'], );
+					$meta[$j] = $stmt->getColumnMeta($j);
+				}
+				
+				// 一行目を出力
+				for ($j = 0; $j < count($meta); $j++) {
+					$sheet->setCellValueByColumnAndRow($j+1, 1, $meta[$j]['name'], );
 				}
 				
 				$j = 2;
@@ -327,11 +362,20 @@ class PHPExcelDB {
 	 * @return array[]
 	 */
 	private function getMetadatas($tableName) {
-		$metas =[];
+		// メタデータ格納用の配列
+		$metas = array();
+		
+		// メタデータ取得用のSELECTを実行する
 		$stmt = $this->pdo->query("SELECT * FROM ".$tableName);
+		
+		// 
 		for($i = 0; $i < $stmt->columnCount(); $i++) {
+			
+			// 結果セットからメタデータを取得
 			$meta = $stmt->getColumnMeta($i);
-			$metas[$meta["name"]] = $meta;
+			
+			// メタデータを配列に格納
+			array_merge($metas, [$meta["name"] => $meta]);
 		}
 		return $metas;
 	}

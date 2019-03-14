@@ -24,11 +24,10 @@ class PHPExcelDBTest extends TestCase {
 	
 	/**
 	 * @test
-	 * @requires PHP 7.4
 	 */
 	public function test01() {
 		$phpExcelDB = new PHPExcelDB($this->pdo);
-		$phpExcelDB->importDBFromExcel(self::INPUTDIR."test01_01.xlsx");
+		$phpExcelDB->importDBFromExcel(self::INPUTDIR."test01_01.xlsx", true);
 		
 		$phpExcelDB->exportDBtoExcel(self::OUTPUTDIR."test01_01.xlsx", ["parent_table", "child_table"]);
 		
@@ -49,14 +48,20 @@ class PHPExcelDBTest extends TestCase {
 	 * @test
 	 */
 	public function testExportData() {
+// 		$connInfo = [
+// 				'host' => '127.0.0.1',
+// 				'port' => 54321,
+// 				'dbname' => 'home_money',
+// 				'username' => 'tomocky1',
+// 				'password' => 'tjge1417'
+// 		];
 		$connInfo = [
 				'host' => '127.0.0.1',
-				'port' => 54321,
+				'port' => 5432,
 				'dbname' => 'home_money',
 				'username' => 'tomocky1',
-				'password' => 'tjge1417'
+				'password' => 'siokobu8400'
 		];
-		
 		$target = [
 				'accounts',
 				'accounts_id_seq',

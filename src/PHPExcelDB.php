@@ -35,24 +35,10 @@ class PHPExcelDB {
 	 */
 	public static function createPDO($connInfo = null)
 	{
-		// $constr が設定されていない場合は、.envから接続文字列を取得
-/* 		if ($connInfo == null) {
-			$dotenv = Dotenv::create(__DIR__.'/..');
-			$dotenv->load();
-			
-			$host = getenv("DB_HOST");
-			$port = getenv("DB_PORT");
-			$database = getenv("DB_DATABASE");
-			
-			$constr = 'pgsql:host='.$host.':'.$port.';dbname='.$database;
-			
-			$username = getenv("DB_USERNAME");
-			$password = getenv("DB_PASSWORD");
-		} else { */
-			$constr = "pgsql:host=".$connInfo["host"].";port=".$connInfo["port"].";dbname=".$connInfo["dbname"].";";
-			$username = $connInfo["username"];
-			$password = $connInfo["password"];
-//		}
+
+		$constr = "pgsql:host=".$connInfo["host"].";port=".$connInfo["port"].";dbname=".$connInfo["dbname"].";";
+		$username = $connInfo["username"];
+		$password = $connInfo["password"];
 		
 		// DB接続用のPDOオブジェクトを初期化
 		$pdo = new PDO($constr, $username, $password);
@@ -93,7 +79,7 @@ class PHPExcelDB {
 	/**
 	 *  Excelファイルの内容をDBへ登録する。
 	 *  @param String $inputFile 登録用データファイル
-	 *  @param Boolean 処理対象のテーブルのデータを削除するかどうか。Trueならば削除する
+	 *  @param Boolean $isDeleteTable 処理対象のテーブルのデータを削除するかどうか。Trueならば削除する
 	 */
 	public function importDBFromExcel($inputFile, $isDeleteTable)
 	{
@@ -128,8 +114,11 @@ class PHPExcelDB {
 				// 処理対象のシートを取得
 				$sheet = $excel->getSheetByName($tableName);
 
-				// Excelシートの内容を配列に格納
-				$data = $sheet->toArray();
+				// 最終行を取得する
+				$max_row = $sheet->getHighestRow();
+				
+				// 最終列を取得する
+				$max_col = Coordinate::columnIndexFromString($sheet->getHighestColumn())-1;
 				
 				// メタデータを取得
 				$metas = $this->getMetadatas($tableName);
@@ -137,50 +126,51 @@ class PHPExcelDB {
 				// カラム文字列格納用配列を初期化
 				$columns = [];
 				
-				// INSERT文用カラム文字列を初期化
-				$sqlColumns = "";
+				// 実行するSQL
+				$sql = "";
+				
+				// プリペアドステートメント
+				$stmt = null;
 				
 				// 各行を読み込みながらINSERT
-				for ($j = 0; $j < count($data); $j++) {
-                    // $sql文を初期化
-					$sql = "";
+				for ($j = 0; $j < $max_row; $j++) {
 					
-					// 一行目はカラム名のため、INSERT分を作成せずカラム列の文字列を作成
+					// 一行目にはカラム名が設定されている。ここではプリペアドステートメントを生成
 					if ($j == 0) {
 						$sql = $sql . "INSERT INTO ".$tableName." (";
 						
-						for ($k = 0; $k < count($data[$j]); $k++) {
-							if(strlen($data[$j][$k])==0) continue;
-							$sqlColumns = $sqlColumns.$data[$j][$k].", ";
-							$columns[$k] = $data[$j][$k];
+						// INSERT 対象のカラム列を生成
+						for ($k = 0; $k < $max_col; $k++) {
+							$columns[$k] = $sheet->getCellByColumnAndRow($k+1, $j+1)->getValue();
+							$sql = $sql . $columns[$k] . ", ";
 						}
-						$sqlColumns = mb_substr($sqlColumns, 0, mb_strlen($sqlColumns)-2);
-						// カラム文字列を生成したら２行目へ進める
+						$sql = mb_substr($sql, 0, -2).") VALUES (";
+						
+						// VALUES句のプレースホルダを作成
+						for ($k = 0; $k < $max_col; $k++) {
+							$sql = $sql . ":" . $sheet->getCellByColumnAndRow($k+1, $j+1) . ", ";
+						}
+						$sql = mb_substr($sql, 0, -2).")";
+						
+						// プリペアドステートメントを生成
+						$stmt = $this->pdo->prepare($sql);
+						
+						// インサート用のプリペアドステートメントを出力
+						$this->logger->debug($sql);
+						
 						continue;
 					}
 					
-					// INSERT用のSQLを生成する
-	         		$sql = "";
-	         		$sql .= "INSERT INTO ".$tableName." (".$sqlColumns.") VALUES (";
-	         		for ($k = 0; $k < count($columns); $k++) {
-	         			$type = $metas[$columns[$k]]["pdo_type"];
-	         			if($type == PDO::PARAM_BOOL || $type == PDO::PARAM_INT) {
-	         				if( strlen($data[$j][$k])>0) {
-	         					$sql .= $data[$j][$k].", ";
-	         				} else {
-	         					$sql .= "null, ";
-	         				}
-	         			} else {
-	         			    $sql .= "'".$data[$j][$k]."', ";
-	         			}
-	         		}
-	         		$sql = mb_substr($sql, 0, mb_strlen($sql)-2);
-	         		$sql .= ");";
-	         		
-	         		// 実行する
-	         		$this->logger->debug($sql);
-					$this->pdo->exec($sql);
-	         	}
+					
+					// プレースホルダに対して、値を設定する
+					for ($k = 0; $k < $max_col; $k++) {
+						$value = $sheet->getCellByColumnAndRow($k+1, $j+1)->getValue();
+						$stmt->bindValue(":".$columns[$k], $value, $metas[$columns[$k]]["pdo_type"]);
+					}
+					
+					// SQLの実行
+					$stmt->execute();
+				}
 	     	}
 	     
 	     	// 全部コミット
@@ -358,8 +348,8 @@ class PHPExcelDB {
 	
 	/**
 	 * 
-	 * @param array $tableName
-	 * @return array[]
+	 * @param String $tableName
+	 * @return array[] カラム名 => メタデータオブジェクト という形式の連想配列
 	 */
 	private function getMetadatas($tableName) {
 		// メタデータ格納用の配列
@@ -375,7 +365,8 @@ class PHPExcelDB {
 			$meta = $stmt->getColumnMeta($i);
 			
 			// メタデータを配列に格納
-			array_merge($metas, [$meta["name"] => $meta]);
+			$metas[$meta["name"]] = $meta;
+//			array_merge($metas, [$meta["name"] => $meta]);
 		}
 		return $metas;
 	}

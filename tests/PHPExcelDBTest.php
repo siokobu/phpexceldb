@@ -38,16 +38,16 @@ class PHPExcelDBTest extends TestCase {
 	/**
 	 * @test
 	 */
-	public function testGetExcelDiff_01() {
-		$phpExcelDB = new PHPExcelDB($this->pdo);
-		$phpExcelDB->getExcelDiff(self::INPUTDIR."testGetExcelDiff_01_01.xlsx", self::INPUTDIR."testGetExcelDiff_01_02.xlsx", self::DIFFDIR."testGetExcelDiff_01.xlsx");
+// 	public function testGetExcelDiff_01() {
+// 		$phpExcelDB = new PHPExcelDB($this->pdo);
+// 		$phpExcelDB->getExcelDiff(self::INPUTDIR."testGetExcelDiff_01_01.xlsx", self::INPUTDIR."testGetExcelDiff_01_02.xlsx", self::DIFFDIR."testGetExcelDiff_01.xlsx");
 				
-	}
+// 	}
 	
 	/**
 	 * @test
 	 */
-	public function testExportData() {
+// 	public function testExportData() {
 // 		$connInfo = [
 // 				'host' => '127.0.0.1',
 // 				'port' => 54321,
@@ -55,16 +55,16 @@ class PHPExcelDBTest extends TestCase {
 // 				'username' => 'tomocky1',
 // 				'password' => 'tjge1417'
 // 		];
-		$connInfo = [
-				'host' => '127.0.0.1',
-				'port' => 5432,
-				'dbname' => 'home_money',
-				'username' => 'tomocky1',
-				'password' => 'siokobu8400'
-		];
-		$target = [
-				'accounts',
-				'accounts_id_seq',
+// 		$connInfo = [
+// 				'host' => '127.0.0.1',
+// 				'port' => 5432,
+// 				'dbname' => 'home_money',
+// 				'username' => 'tomocky1',
+// 				'password' => 'siokobu8400'
+// 		];
+// 		$target = [
+// 				'accounts',
+// 				'accounts_id_seq',
 // 				'balances',
 // 				'balances_id_seq',
 // 				'balances_wallet_id_seq',
@@ -82,13 +82,13 @@ class PHPExcelDBTest extends TestCase {
 // 				'receipts_id_seq',
 // 				'trans',
 // 				'trans_id_seq',
-				'user'
-		];
+// 				'user'
+// 		];
 		
-		$phpExcelDB = new PHPExcelDB(PHPExcelDB::createPDO($connInfo));
-		$phpExcelDB->exportDBtoExcel(__DIR__."/output/alldata.xlsx", $target);
+// 		$phpExcelDB = new PHPExcelDB(PHPExcelDB::createPDO($connInfo));
+// 		$phpExcelDB->exportDBtoExcel(__DIR__."/output/alldata.xlsx", $target);
 		
 		
-	}
+// 	}
 	
 }

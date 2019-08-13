@@ -11,7 +11,7 @@ use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 use PhpOffice\PhpSpreadsheet\Style\Color;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
-
+use fuga;
 
 /**
  *  Excelを利用したDB操作のユーティリティクラス
@@ -357,9 +357,10 @@ class PHPExcelDB {
 		
 		// メタデータ取得用のSELECTを実行する
 		$stmt = $this->pdo->query("SELECT * FROM ".$tableName);
-		
+		$count = $stmt->columnCount();
+		if(!$count) print_r($count);
 		// 
-		for($i = 0; $i < $stmt->columnCount(); $i++) {
+		for($i = 0; $i < $count; $i++) {
 			
 			// 結果セットからメタデータを取得
 			$meta = $stmt->getColumnMeta($i);
